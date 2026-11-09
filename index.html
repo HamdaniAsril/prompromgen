@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PromPromGen</title>
+<meta name="description" content="PromPromGen — Prompt Promosi Generator. Susun prompt desain spanduk, flyer, poster dan konten sosmed yang siap ditempel ke AI gambar.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --paper:#F4F0E8; --surface:#FFFCF6; --surface-2:#F0EBE1; --surface-3:#E8E1D4;
+  --line:#E2DACB; --line-2:#CBC1AE;
+  --ink:#17140F; --ink-2:#5A5246; --ink-3:#8C8374;
+  --accent:#D4145A; --accent-ink:#FFFFFF; --accent-soft:#FBE3EC; --accent-line:#F0A9C3;
+  --ok:#1F7A4D; --ok-soft:#DDF0E5; --warn:#9A5B0C; --warn-soft:#FBEFD9;
+  --code-bg:#17140F; --code-ink:#ECE6DA; --code-dim:#8C8374; --code-hl:#FF7EAB;
+  --stage:#E9E3D7;
+  --r-sm:6px; --r:10px; --r-lg:16px;
+  --ease:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.4,.64,1);
+  --font-ui:"Plus Jakarta Sans",system-ui,sans-serif;
+  --font-display:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#12100D; --surface:#1B1814; --surface-2:#24201A; --surface-3:#2D2820;
+    --line:#2F2A23; --line-2:#453E33;
+    --ink:#F3EEE4; --ink-2:#BDB3A3; --ink-3:#877E70;
+    --accent:#FF4D8D; --accent-ink:#1A0610; --accent-soft:#3A1424; --accent-line:#7A2A4A;
+    --ok:#5FC48E; --ok-soft:#163223; --warn:#E8A54B; --warn-soft:#33260F;
+    --code-bg:#0C0B09; --code-ink:#ECE6DA; --code-dim:#7A7265; --code-hl:#FF7EAB;
+    --stage:#0F0E0B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12100D; --surface:#1B1814; --surface-2:#24201A; --surface-3:#2D2820;
+  --line:#2F2A23; --line-2:#453E33;
+  --ink:#F3EEE4; --ink-2:#BDB3A3; --ink-3:#877E70;
+  --accent:#FF4D8D; --accent-ink:#1A0610; --accent-soft:#3A1424; --accent-line:#7A2A4A;
+  --ok:#5FC48E; --ok-soft:#163223; --warn:#E8A54B; --warn-soft:#33260F;
+  --code-bg:#0C0B09; --code-ink:#ECE6DA; --code-dim:#7A7265; --code-hl:#FF7EAB;
+  --stage:#0F0E0B;
+  color-scheme:dark;
+}
+
+/* ============ BASE ============ */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--font-ui);-webkit-font-smoothing:antialiased;transition:background .3s var(--ease),color .3s var(--ease)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+::selection{background:var(--accent);color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ============ TOP BAR ============ */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1320px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:inherit;margin-right:auto}
+.brand svg{width:38px;height:38px;flex:none}
+.brand .p-top{transition:transform .35s var(--spring)}
+.brand:hover .p-top{transform:translate(-1.5px,-1.5px)}
+.brand-name{font:800 21px/1 var(--font-display);letter-spacing:-.02em}
+.brand-name em{font-style:normal;color:var(--accent)}
+.brand-sub{display:block;font:500 11.5px/1.2 var(--font-ui);color:var(--ink-3);margin-top:3px;letter-spacing:.01em}
+.tb-btn{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface);font-weight:600;font-size:13px;transition:border-color .15s,background .15s,transform .15s var(--spring)}
+.tb-btn:hover{border-color:var(--ink-2)}
+.tb-btn:active{transform:scale(.96)}
+.tb-btn svg{width:16px;height:16px}
+.tb-icon{width:36px;padding:0;justify-content:center}
+@media (max-width:640px){.tb-label{display:none}.tb-btn{width:36px;padding:0;justify-content:center}.brand-sub{display:none}}
+
+/* ============ LAYOUT ============ */
+.app{max-width:1320px;margin:0 auto;padding:0 20px 80px;display:grid;grid-template-columns:minmax(0,1fr) 452px;gap:28px;align-items:start}
+@media (max-width:1060px){.app{grid-template-columns:minmax(0,1fr);padding-bottom:120px}}
+body{overflow-x:clip}
+
+/* ============ INTRO ============ */
+.intro{padding:34px 0 20px}
+.intro h1{font:800 clamp(30px,4.6vw,50px)/1.02 var(--font-display);letter-spacing:-.035em;margin:0;max-width:16ch}
+.intro h1 .mark{position:relative;white-space:nowrap}
+.intro h1 .mark::after{content:"";position:absolute;left:-2px;right:-2px;bottom:.06em;height:.3em;background:var(--accent);opacity:.22;z-index:-1;transform-origin:left;animation:swipe .9s .35s var(--ease) both}
+.intro p{margin:12px 0 0;color:var(--ink-2);font-size:16px;max-width:58ch}
+@keyframes swipe{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* ============ STEP RAIL ============ */
+.rail{position:sticky;top:63px;z-index:10;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:10px 0 12px;margin-bottom:6px}
+.rail-list{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;list-style:none;margin:0;padding:0}
+.rail a{display:block;text-decoration:none;color:inherit;padding:8px 10px 9px;border-radius:var(--r);border:1px solid transparent;transition:background .2s,border-color .2s}
+.rail a:hover{background:var(--surface)}
+.rail a.on{background:var(--surface);border-color:var(--line)}
+.rail-top{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700}
+.rail-dot{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;border:1.5px solid var(--line-2);color:var(--ink-3);transition:background .3s,border-color .3s,color .3s,transform .4s var(--spring)}
+.rail a.done .rail-dot{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.rail a.done .rail-dot b{display:none}
+.rail a .rail-dot svg{display:none;width:10px;height:10px}
+.rail a.done .rail-dot svg{display:block;animation:pop .4s var(--spring)}
+.rail-sum{display:block;font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;padding-left:25px}
+.rail-bar{height:3px;background:var(--line);border-radius:3px;margin-top:10px;overflow:hidden}
+.rail-bar i{display:block;height:100%;background:var(--accent);border-radius:3px;transform-origin:left;transition:transform .6s var(--ease)}
+@media (max-width:760px){
+  .rail{top:61px;margin:0 -20px;padding:8px 20px 10px}
+  .rail-list{display:flex;overflow-x:auto;scrollbar-width:none;gap:4px}
+  .rail-list::-webkit-scrollbar{display:none}
+  .rail li{flex:none}
+  .rail-sum{display:none}
+}
+@keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+
+/* ============ SECTIONS ============ */
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;margin-bottom:14px;animation:rise .6s var(--ease) both}
+.sec:nth-of-type(2){animation-delay:.05s}.sec:nth-of-type(3){animation-delay:.1s}.sec:nth-of-type(4){animation-delay:.15s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.sec-h{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+.sec-n{flex:none;font:800 13px/1 var(--font-display);color:var(--accent);padding-top:5px;letter-spacing:.02em;min-width:22px}
+.sec-h h2{margin:0;font:700 21px/1.2 var(--font-display);letter-spacing:-.015em}
+.sec-h p{margin:3px 0 0;font-size:13.5px;color:var(--ink-2)}
+@media (max-width:560px){.sec{padding:18px 16px}.sec-h{gap:10px}}
+
+/* ============ OPTION CARDS ============ */
+.grid{display:grid;gap:8px}
+.g-type{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.g-style{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+@media (max-width:420px){.g-type,.g-style{grid-template-columns:1fr 1fr}}
+.opt{position:relative;text-align:left;border:1.5px solid var(--line);background:var(--surface-2);border-radius:var(--r);padding:12px;transition:border-color .2s,background .2s,transform .25s var(--spring),box-shadow .2s}
+.opt:hover{border-color:var(--line-2);transform:translateY(-1px)}
+.opt:active{transform:scale(.97)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt::after{content:"";position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8.5l2.6 2.5L12 5.5'/%3E%3C/svg%3E") center/12px no-repeat;transform:scale(0);transition:transform .35s var(--spring)}
+.opt[aria-pressed="true"]::after{transform:scale(1)}
+.opt b{display:block;font-size:14px;font-weight:700;line-height:1.25;padding-right:18px}
+.opt small{display:block;font-size:12px;color:var(--ink-2);line-height:1.35;margin-top:3px}
+.ratio-ico{height:34px;display:flex;align-items:flex-end;margin-bottom:10px}
+.ratio-ico i{display:block;border:2px solid var(--ink-3);border-radius:3px;transition:border-color .2s,background .2s}
+.opt[aria-pressed="true"] .ratio-ico i{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.style-sw{height:58px;border-radius:7px;margin-bottom:10px;position:relative;overflow:hidden;display:grid;place-items:center;font:800 22px/1 var(--font-display);border:1px solid rgba(0,0,0,.06)}
+
+/* ============ CHIPS / SEG ============ */
+.lbl{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.lbl em{font-style:normal;font-weight:500;color:var(--ink-3);font-size:12.5px}
+.block+.block{margin-top:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--surface-2);border-radius:var(--r);padding:8px 13px;font-size:13.5px;font-weight:600;transition:border-color .2s,background .2s,transform .25s var(--spring)}
+.chip:hover{border-color:var(--line-2)}
+.chip:active{transform:scale(.96)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.chip small{font-weight:500;color:var(--ink-3);font-size:12px}
+.seg{position:relative;display:inline-flex;border:1.5px solid var(--line);border-radius:999px;padding:3px;background:var(--surface-2)}
+.seg button{position:relative;z-index:1;border:0;background:none;border-radius:999px;padding:7px 16px;font-weight:600;font-size:13.5px;color:var(--ink-2);transition:color .25s}
+.seg button[aria-pressed="true"]{color:var(--paper)}
+.seg .thumb{position:absolute;z-index:0;top:3px;bottom:3px;border-radius:999px;background:var(--ink);transition:left .35s var(--spring),width .35s var(--spring)}
+.seg-ico{display:inline-flex;gap:7px;align-items:center}
+.seg-ico i{display:inline-block;border:1.6px solid currentColor;border-radius:2px}
+.spec{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:16px;padding:11px 14px;border-radius:var(--r);background:var(--surface-2);font-size:13px;color:var(--ink-2)}
+.spec b{color:var(--ink);font-weight:700}
+.collapse{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s var(--ease)}
+.collapse>div{overflow:hidden}
+.collapse.open{grid-template-rows:1fr}
+.collapse.open>div{padding-top:14px}
+
+/* ============ INPUTS ============ */
+.field{margin-bottom:14px}
+.row{display:grid;gap:12px}
+.r2{grid-template-columns:1fr 1fr}
+.r3{grid-template-columns:1fr 1fr 100px}
+@media (max-width:560px){.r2{grid-template-columns:1fr}}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--surface-2);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:11px 12px;outline:none;transition:border-color .2s,background .2s,box-shadow .2s}
+input:hover,textarea:hover,select:hover{border-color:var(--line-2)}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 14%,transparent)}
+input::placeholder,textarea::placeholder{color:var(--ink-3)}
+textarea{resize:vertical;min-height:96px;line-height:1.5}
+.lvl{display:inline-flex;align-items:flex-end;gap:2px;height:12px;margin-left:auto;align-self:center}
+.lvl i{display:block;width:4px;border-radius:1px;background:var(--line-2)}
+.lvl i.on{background:var(--ink-2)}
+.lbl .lvl-t{font-size:11.5px;color:var(--ink-3);font-weight:500;margin-left:6px}
+
+/* color */
+.color-row{display:flex;gap:10px;align-items:stretch}
+.color-swatch{position:relative;flex:none;width:48px;border-radius:var(--r-sm);border:1.5px solid var(--line);overflow:hidden;transition:background .3s}
+.color-swatch input{position:absolute;inset:-8px;width:calc(100% + 16px);height:calc(100% + 16px);opacity:0;cursor:pointer}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.qs{width:28px;height:28px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line-2);transition:transform .25s var(--spring),box-shadow .2s}
+.qs:hover{transform:scale(1.12)}
+.qs[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.schemes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+@media (max-width:420px){.schemes{grid-template-columns:1fr 1fr}.sch{font-size:12.5px;gap:8px}}
+.sch{display:flex;align-items:center;gap:10px;text-align:left;border:1.5px solid var(--line);background:var(--surface-2);border-radius:var(--r);padding:9px 10px;font-size:13px;font-weight:600;transition:border-color .2s,background .2s,transform .25s var(--spring)}
+.sch:hover{border-color:var(--line-2)}
+.sch:active{transform:scale(.97)}
+.sch[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.pal{flex:none;display:flex;border-radius:5px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.pal i{display:block;width:11px;height:24px;transition:background .4s var(--ease)}
+.pal i:first-child{width:16px}
+
+/* points */
+.points{display:grid;gap:8px}
+.point{display:flex;gap:8px;align-items:center;animation:rise .3s var(--ease) both}
+.point>span{flex:none;width:20px;color:var(--ink-3);font-size:13px;font-weight:700;text-align:right}
+.x-btn{flex:none;width:38px;height:42px;border:1.5px solid var(--line);background:var(--surface-2);border-radius:var(--r-sm);color:var(--ink-3);display:grid;place-items:center;transition:color .15s,border-color .15s}
+.x-btn:hover{color:var(--accent);border-color:var(--accent)}
+.x-btn svg{width:14px;height:14px}
+.add-btn{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:none;border:1.5px dashed var(--line-2);border-radius:var(--r-sm);padding:8px 12px;color:var(--ink-2);font-weight:600;font-size:13px;transition:border-color .15s,color .15s}
+.add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.add-btn:disabled{opacity:.5;cursor:not-allowed}
+.warn{display:flex;gap:9px;align-items:flex-start;background:var(--warn-soft);color:var(--warn);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;font-weight:600;margin-top:4px;animation:rise .3s var(--ease) both}
+.warn svg{flex:none;width:16px;height:16px;margin-top:1px}
+.hint{font-size:12.5px;color:var(--ink-3);margin-top:6px}
+
+/* toggles */
+.tgl{display:flex;gap:14px;align-items:flex-start;padding:13px 0;border-top:1px solid var(--line);cursor:pointer}
+.tgl:first-of-type{margin-top:6px}
+.tgl input{position:absolute;opacity:0;pointer-events:none}
+.sw{flex:none;width:40px;height:23px;border-radius:999px;background:var(--line-2);position:relative;transition:background .25s;margin-top:1px}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .35s var(--spring)}
+.tgl input:checked+.sw{background:var(--accent)}
+.tgl input:checked+.sw::after{transform:translateX(17px)}
+.tgl input:focus-visible+.sw{outline:2px solid var(--accent);outline-offset:2px}
+.tgl b{display:block;font-size:14px;font-weight:600}
+.tgl small{display:block;font-size:12.5px;color:var(--ink-3);margin-top:1px}
+
+/* ============ SIDE PANEL ============ */
+.side{position:sticky;top:76px;padding-top:34px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 76px)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.p-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.p-head h3{margin:0;font:700 15px/1.2 var(--font-display)}
+.p-meta{font-size:12px;color:var(--ink-3);font-weight:600;font-variant-numeric:tabular-nums}
+.stage{height:268px;background:var(--stage);display:grid;place-items:center;position:relative;overflow:hidden;transition:background .3s}
+.stage-cap{display:flex;justify-content:space-between;gap:10px;padding:9px 16px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--line)}
+.stage-cap span{display:inline-flex;align-items:center;gap:6px}
+.stage-cap i{display:inline-block;width:14px;border-top:1.5px dashed var(--ink-3)}
+
+/* canvas preview */
+.cv{position:relative;container-type:size;overflow:hidden;border-radius:3px;box-shadow:0 1px 1px rgba(0,0,0,.08),0 18px 36px -16px rgba(0,0,0,.45);transition:width .6s var(--spring),height .6s var(--spring),background .5s var(--ease);font-family:var(--font-ui)}
+.cv-safe{position:absolute;inset:4%;border:1px dashed currentColor;opacity:.28;pointer-events:none;transition:inset .5s var(--ease)}
+.cv-in{position:absolute;inset:7cqmin;display:grid;gap:3cqmin;grid-template-columns:1fr;grid-template-rows:auto 1fr auto;grid-template-areas:"top" "vis" "bot";transition:inset .5s var(--ease)}
+.cv[data-lay="row"] .cv-in{grid-template-columns:1.1fr 1fr;grid-template-rows:1fr auto;grid-template-areas:"top vis" "bot vis";column-gap:5cqw}
+.cv[data-lay="wide"] .cv-in{grid-template-columns:1.5fr 1fr;grid-template-rows:1fr auto;grid-template-areas:"top vis" "bot vis";column-gap:4cqw}
+.cv-top{grid-area:top;display:flex;flex-direction:column;gap:1.4cqmin;min-height:0;overflow:hidden;justify-content:flex-start}
+.cv[data-lay]:not([data-lay="col"]) .cv-top{justify-content:center}
+.cv-bot{grid-area:bot;display:flex;flex-direction:column;gap:1.6cqmin;min-height:0;overflow:hidden}
+.cv-vis{grid-area:vis;border-radius:2cqmin;position:relative;overflow:hidden;min-height:0;display:grid;place-items:center;transition:background .5s var(--ease)}
+.cv-vis::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.16) 0 1.5px,transparent 1.5px 9px)}
+.cv-vis span{position:relative;font:700 2.6cqmin/1.2 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;padding:.6em .9em;border-radius:99px;background:rgba(0,0,0,.28);color:#fff;text-align:center;max-width:90%}
+.cv-brand{font:700 3.2cqw/1.1 var(--font-ui);letter-spacing:.04em;text-transform:uppercase;opacity:.75}
+.cv-h{font:800 8.6cqw/0.98 var(--font-display);letter-spacing:-.025em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-word}
+.cv-sub{font:500 3.9cqw/1.25 var(--font-ui);opacity:.85;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cv-pts{margin:0;padding:0;list-style:none;display:grid;gap:.9cqmin;font:500 3.1cqw/1.25 var(--font-ui)}
+.cv-pts li{display:flex;gap:.6em;align-items:baseline;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv-pts li::before{content:"";flex:none;width:.5em;height:.5em;border-radius:1px;background:currentColor;opacity:.6;transform:translateY(-.1em)}
+.cv-row{display:flex;align-items:center;gap:2cqmin;flex-wrap:wrap}
+.cv-price{font:800 4cqw/1 var(--font-display);padding:.45em .6em;border-radius:.3em;transform:rotate(-2deg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cv-cta{font:700 3.3cqw/1 var(--font-ui);padding:.6em 1em;border-radius:99px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cv-contact{font:500 2.6cqw/1.3 var(--font-ui);opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv[data-lay]:not([data-lay="col"]) .cv-brand{font-size:5.4cqh}
+.cv[data-lay]:not([data-lay="col"]) .cv-h{font-size:15cqh}
+.cv[data-lay]:not([data-lay="col"]) .cv-sub{font-size:6.4cqh}
+.cv[data-lay]:not([data-lay="col"]) .cv-pts{font-size:5.2cqh}
+.cv[data-lay]:not([data-lay="col"]) .cv-price{font-size:6.6cqh}
+.cv[data-lay]:not([data-lay="col"]) .cv-cta{font-size:5.4cqh}
+.cv[data-lay]:not([data-lay="col"]) .cv-contact{font-size:4.4cqh}
+.cv[data-lay="wide"] .cv-h{font-size:19cqh}
+.cv .serif{font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:-.01em}
+.ghost{display:block;height:.8em;border-radius:.2em;background:currentColor;opacity:.16}
+.cv-el{animation:fadein .4s var(--ease) both}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}}
+
+/* prompt panel */
+.prompt{display:flex;flex-direction:column;min-height:0;flex:1}
+.p-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.copy{position:relative;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:14px;overflow:hidden;transition:transform .25s var(--spring),background .3s}
+.copy:hover{transform:translateY(-1px)}
+.copy:active{transform:scale(.95)}
+.copy svg{width:16px;height:16px}
+.copy .c-ok{display:none}
+.copy.done{background:var(--ok);color:#fff}
+.copy.done .c-ok{display:inline-flex;animation:pop .4s var(--spring)}
+.copy.done .c-def{display:none}
+pre.out{margin:0;padding:16px 18px 22px;background:var(--code-bg);color:var(--code-ink);font:12.5px/1.7 var(--font-mono);white-space:pre-wrap;word-break:break-word;overflow:auto;flex:1;min-height:200px}
+pre.out .ln{display:block;border-radius:3px;margin:0 -6px;padding:0 6px}
+pre.out .ln.h{color:var(--code-hl);font-weight:500;margin-top:.4em}
+pre.out .ln.new{animation:flash 1.6s var(--ease)}
+pre.out q{quotes:none;color:#FFE08A}
+@keyframes flash{0%{background:color-mix(in srgb,var(--code-hl) 30%,transparent)}100%{background:transparent}}
+.p-foot{display:flex;justify-content:space-between;gap:10px;padding:9px 16px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--line)}
+.side>.panel{flex:none}
+.side>.prompt-panel{display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+
+/* ============ MOBILE: bottom bar + sheet ============ */
+.mbar{display:none}
+.scrim{display:none}
+.sheet-grab{display:none}
+@media (max-width:1060px){
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;max-height:none;height:min(90dvh,860px);padding:8px 12px calc(12px + env(safe-area-inset-bottom));background:var(--paper);border-radius:20px 20px 0 0;box-shadow:0 -20px 50px -10px rgba(0,0,0,.35);transform:translateY(104%);transition:transform .5s var(--spring);overflow-y:auto;gap:10px}
+  .side.open{transform:none}
+  .sheet-grab{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 4px}
+  .sheet-grab b{font:700 16px var(--font-display)}
+  .sheet-grab::before{content:"";position:absolute;top:8px;left:50%;width:40px;height:4px;margin-left:-20px;border-radius:4px;background:var(--line-2)}
+  .stage{height:220px}
+  .side .prompt-panel{min-height:0;flex:none}
+  pre.out{max-height:none;overflow:visible}
+  .scrim{display:block;position:fixed;inset:0;z-index:35;background:rgba(10,8,6,.5);opacity:0;pointer-events:none;transition:opacity .3s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .mbar{display:flex;align-items:center;gap:12px;position:fixed;z-index:30;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));padding:10px 10px 10px 12px;background:var(--ink);color:var(--paper);border-radius:16px;box-shadow:0 14px 30px -10px rgba(0,0,0,.5);animation:rise .5s .2s var(--ease) both}
+  .mb-thumb{flex:none;width:40px;height:40px;display:grid;place-items:center}
+  .mb-thumb i{display:block;border-radius:2px;transition:width .5s var(--spring),height .5s var(--spring),background .4s}
+  .mb-txt{flex:1;min-width:0;line-height:1.25}
+  .mb-txt b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-txt small{display:block;font-size:12px;opacity:.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-btn{flex:none;height:40px;padding:0 15px;border:0;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13.5px}
+  .x-sheet{width:36px;height:36px;border-radius:50%;border:1px solid var(--line-2);background:var(--surface);display:grid;place-items:center}
+  .x-sheet svg{width:16px;height:16px}
+}
+
+/* toast */
+.toast{position:fixed;left:50%;top:18px;z-index:60;transform:translate(-50%,-140%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:12px;font-weight:600;font-size:13.5px;display:flex;gap:8px;align-items:center;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);transition:transform .45s var(--spring)}
+.toast.on{transform:translate(-50%,0)}
+.toast svg{width:16px;height:16px;color:var(--ok)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#" aria-label="PromPromGen, ke atas">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <rect x="2" y="2" width="60" height="60" rx="14" fill="var(--ink)"/>
+        <g transform="translate(-2 -2)" fill-rule="evenodd">
+          <path transform="translate(4 4)" fill="var(--accent)" d="M18 14H34A11 11 0 0 1 34 36H28V50H18ZM28 22V28H33A3 3 0 0 0 33 22Z"/>
+          <path class="p-top" fill="var(--paper)" d="M18 14H34A11 11 0 0 1 34 36H28V50H18ZM28 22V28H33A3 3 0 0 0 33 22Z"/>
+        </g>
+      </svg>
+      <span><span class="brand-name">PromProm<em>Gen</em></span><span class="brand-sub">Prompt Promosi Generator</span></span>
+    </a>
+    <button class="tb-btn" id="btnSample" type="button" title="Isi dengan contoh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/></svg><span class="tb-label">Isi contoh</span>
+    </button>
+    <button class="tb-btn" id="btnReset" type="button" title="Kosongkan isian">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span class="tb-label">Reset</span>
+    </button>
+    <button class="tb-btn tb-icon" id="btnTheme" type="button" aria-label="Ganti tema terang/gelap">
+      <svg id="icoTheme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="app">
+  <main>
+    <div class="intro">
+      <h1>Brief desain jadi prompt yang <span class="mark">siap tempur.</span></h1>
+      <p>Pilih jenis materi promosi, atur ukuran, gaya dan warna, lalu tulis teksnya. PromPromGen menyusun prompt lengkap dengan aturan desain, siap ditempel ke ChatGPT, Gemini, Ideogram atau Midjourney.</p>
+    </div>
+
+    <nav class="rail" aria-label="Langkah">
+      <ol class="rail-list" id="rail"></ol>
+      <div class="rail-bar" aria-hidden="true"><i id="railBar"></i></div>
+    </nav>
+
+    <!-- 01 -->
+    <section class="sec" id="s1" aria-labelledby="h1t">
+      <div class="sec-h"><span class="sec-n">01</span><div><h2 id="h1t">Mau bikin apa?</h2><p>Jenis materi menentukan pilihan ukuran dan aturan tata letak di prompt.</p></div></div>
+      <div class="grid g-type" id="types"></div>
+    </section>
+
+    <!-- 02 -->
+    <section class="sec" id="s2" aria-labelledby="h2t">
+      <div class="sec-h"><span class="sec-n">02</span><div><h2 id="h2t">Ukuran &amp; format</h2><p id="formatHint"></p></div></div>
+      <div id="format"></div>
+    </section>
+
+    <!-- 03 -->
+    <section class="sec" id="s3" aria-labelledby="h3t">
+      <div class="sec-h"><span class="sec-n">03</span><div><h2 id="h3t">Gaya visual</h2><p>Arah artistik keseluruhan. Setiap gaya membawa deskripsi teknisnya sendiri ke prompt.</p></div></div>
+      <div class="grid g-style" id="styles"></div>
+    </section>
+
+    <!-- 04 -->
+    <section class="sec" id="s4" aria-labelledby="h4t">
+      <div class="sec-h"><span class="sec-n">04</span><div><h2 id="h4t">Warna</h2><p>Warna teks tidak perlu dipilih. AI diminta menentukannya dari skema dan aturan kontras.</p></div></div>
+      <div class="block">
+        <label class="lbl" for="color">Warna utama <em>opsional</em></label>
+        <div class="color-row">
+          <label class="color-swatch" id="swatch" title="Pilih warna"><input type="color" id="colorPick" value="#d4145a" aria-label="Pilih warna dari palet"></label>
+          <input type="text" id="color" data-k="color" placeholder="Ketik nama atau kode warna, cth: hijau botol, #1F3A68" autocomplete="off">
+        </div>
+        <div class="quick" id="quick" aria-label="Warna cepat"></div>
+      </div>
+      <div class="block">
+        <span class="lbl">Skema warna <em>pratinjau palet mengikuti warna utama</em></span>
+        <div class="schemes" id="schemes"></div>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section class="sec" id="s5" aria-labelledby="h5t">
+      <div class="sec-h"><span class="sec-n">05</span><div><h2 id="h5t">Brand &amp; teks</h2><p>Semua teks ditulis persis seperti yang kamu ketik. Kosongkan yang tidak perlu.</p></div></div>
+      <div class="row r2">
+        <div class="field"><label class="lbl" for="brand">Nama brand / usaha</label><input type="text" id="brand" data-k="brand" placeholder="Nama usaha kamu" autocomplete="off"></div>
+        <div class="field"><label class="lbl" for="biz">Bidang usaha / produk</label><input type="text" id="biz" data-k="biz" placeholder="Cth: kedai kopi susu kekinian" autocomplete="off"></div>
+      </div>
+      <div class="field"><label class="lbl" for="headline">Judul utama<span class="lvl" aria-hidden="true"><i class="on" style="height:12px"></i><i class="on" style="height:8px"></i><i class="on" style="height:5px"></i></span><span class="lvl-t">paling besar</span></label><input type="text" id="headline" data-k="headline" placeholder="Cth: GRAND OPENING" autocomplete="off"></div>
+      <div class="field"><label class="lbl" for="sub">Sub-judul<span class="lvl" aria-hidden="true"><i style="height:12px"></i><i class="on" style="height:8px"></i><i class="on" style="height:5px"></i></span><span class="lvl-t">pendukung</span></label><input type="text" id="sub" data-k="sub" placeholder="Cth: Ngopi enak mulai 10 ribuan" autocomplete="off"></div>
+      <div class="field">
+        <span class="lbl">Poin-poin <em>maks 6</em><span class="lvl" aria-hidden="true"><i style="height:12px"></i><i style="height:8px"></i><i class="on" style="height:5px"></i></span><span class="lvl-t">detail</span></span>
+        <div class="points" id="points"></div>
+        <button class="add-btn" id="addPoint" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Tambah poin</button>
+      </div>
+      <div class="row r2">
+        <div class="field"><label class="lbl" for="price">Harga / promo</label><input type="text" id="price" data-k="price" placeholder="Cth: Diskon 50%" autocomplete="off"></div>
+        <div class="field"><label class="lbl" for="cta">Ajakan (CTA)</label><input type="text" id="cta" data-k="cta" placeholder="Cth: Pesan sekarang!" autocomplete="off"></div>
+      </div>
+      <div class="field" style="margin-bottom:0"><label class="lbl" for="contact">Kontak / alamat / sosmed</label><input type="text" id="contact" data-k="contact" placeholder="Cth: WA 0812-xxxx-xxxx · @akunkamu" autocomplete="off"></div>
+      <div id="textWarn" aria-live="polite"></div>
+    </section>
+
+    <!-- 06 -->
+    <section class="sec" id="s6" aria-labelledby="h6t">
+      <div class="sec-h"><span class="sec-n">06</span><div><h2 id="h6t">Detail tambahan</h2><p>Opsional. Deskripsikan subjek, suasana, atau hal yang wajib muncul.</p></div></div>
+      <textarea id="notes" data-k="notes" placeholder="Cth: Tampilkan 2 gelas es kopi susu berembun di meja kayu, suasana kedai hangat sore hari."></textarea>
+      <label class="tgl"><input type="checkbox" data-k="refImg"><span class="sw"></span><span><b>Saya lampirkan foto produk / referensi</b><small>AI diminta mempertahankan bentuk, label dan warna produk persis seperti foto.</small></span></label>
+      <label class="tgl"><input type="checkbox" data-k="logo"><span class="sw"></span><span><b>Saya lampirkan file logo</b><small>Tanpa logo, AI menulis nama brand sebagai wordmark dan dilarang mengarang simbol.</small></span></label>
+      <label class="tgl"><input type="checkbox" data-k="mockup"><span class="sw"></span><span><b>Tampilkan sebagai mockup terpasang</b><small>Matikan untuk desain flat yang siap cetak atau unggah.</small></span></label>
+    </section>
+  </main>
+
+  <!-- ============ SIDE / SHEET ============ -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="side" id="side" aria-label="Pratinjau dan prompt">
+    <div class="sheet-grab"><b>Hasil</b><button class="x-sheet" id="closeSheet" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="panel">
+      <div class="p-head"><h3>Pratinjau kanvas</h3><span class="p-meta" id="pvMeta"></span></div>
+      <div class="stage" id="stage">
+        <div class="cv" id="cv">
+          <div class="cv-safe" id="cvSafe"></div>
+          <div class="cv-in" id="cvIn">
+            <div class="cv-top" id="cvTop"></div>
+            <div class="cv-vis" id="cvVis"><span id="cvVisLbl">Visual utama</span></div>
+            <div class="cv-bot" id="cvBot"></div>
+          </div>
+        </div>
+      </div>
+      <div class="stage-cap"><span>Ilustrasi susunan, bukan hasil akhir AI</span><span><i></i>area aman</span></div>
+    </div>
+    <div class="panel prompt-panel">
+      <div class="p-tools">
+        <div class="seg" id="mode" role="group" aria-label="Format prompt">
+          <span class="thumb"></span>
+          <button type="button" data-mode="full">Lengkap</button>
+          <button type="button" data-mode="mj">Midjourney</button>
+        </div>
+        <button class="copy" id="copy" type="button">
+          <span class="c-def" style="display:inline-flex;gap:8px;align-items:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Salin prompt</span>
+          <span class="c-ok" style="gap:8px;align-items:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Tersalin</span>
+        </button>
+      </div>
+      <pre class="out" id="output" aria-live="off"></pre>
+      <div class="p-foot"><span id="modeNote"></span><span id="count"></span></div>
+    </div>
+  </aside>
+</div>
+
+<!-- mobile bar -->
+<div class="mbar" id="mbar">
+  <div class="mb-thumb"><i id="mbThumb"></i></div>
+  <div class="mb-txt"><b id="mbTitle"></b><small id="mbSub"></small></div>
+  <button class="mb-btn" id="openSheet" type="button">Lihat prompt</button>
+</div>
+
+<div class="toast" id="toast" role="status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="toastTxt">Prompt tersalin</span></div>
+
+<script>
+/* =========================================================
+   DATA
+   ========================================================= */
+const CTX = {
+  outdoor:{ warnWords:25, safe:"5%", en:"Viewed outdoors from 5–20 m away, usually at a glance while people pass by. The headline must be legible from a distance: heavy bold type taking a large share of the height, maximum contrast, no thin or script fonts for key information, no small details carrying meaning. Keep a 5% safe margin on all edges for eyelets and folding." },
+  billboard:{ warnWords:12, safe:"5%", en:"Viewed from 30–100 m by passing drivers in about 3 seconds. One message only: one dominant visual plus a headline, no body copy. Simple bold shapes and extreme contrast; anything small will be invisible." },
+  standee:{ warnWords:45, safe:"5% 6% 10% 6%", en:"Free-standing vertical display viewed at 1–3 m. Read top to bottom: brand and headline in the top third, hero visual in the middle, key points and CTA at eye level, contact info lower. Keep the bottom 10% free of important content (stand base) and keep generous side margins." },
+  poster:{ warnWords:45, safe:"4%", en:"Hung on a wall or shop window, viewed at 1–3 m. A strong focal point that reads from across the room, then rewards closer reading. 3 mm bleed; keep all text at least 5 mm inside the trim." },
+  flyer:{ warnWords:90, safe:"4%", en:"Held in the hand at 30–50 cm. Can carry more detail but needs a clear scan path: headline → visual → offer → CTA/contact. 3 mm bleed; all text at least 5 mm inside the trim; body text never smaller than 8 pt equivalent." },
+  menu:{ warnWords:200, safe:"4%", en:"Read up close while deciding what to buy. Items and prices must be scannable: consistent columns, aligned prices, clear grouping by section, appetizing visuals that never sit behind text. 3 mm bleed, 5 mm safe margin." },
+  feed:{ warnWords:30, safe:"5%", en:"Seen on a phone while scrolling: it must stop the scroll in under one second and stay legible at small preview size. One focal point, big headline, minimal text, breathing room at the edges." },
+  story:{ warnWords:30, safe:"14% 6% 20% 6%", en:"Full-screen vertical on a phone. Keep all text and key elements out of the top 14% and bottom 20% of the canvas (app UI overlays). Large type within the central safe zone, one message per frame." },
+  thumb:{ warnWords:8, safe:"5% 5% 18% 5%", en:"Seen at tiny sizes (as small as 168 px wide) next to competing thumbnails. Max 3–5 huge words, one bold subject with strong emotion or contrast, no small text, keep the bottom-right corner clear (duration badge)." },
+  web:{ warnWords:25, safe:"8% 15%", en:"Displayed on screens and often cropped responsively: keep text and the key subject inside the central 70% safe area, clean edges, crisp at screen resolution." }
+};
+
+const TYPES = [
+  { id:"spanduk", name:"Spanduk", hint:"Outdoor horizontal", ctx:"outdoor", unit:"m", orient:false, en:"outdoor promotional banner (spanduk) printed on flexi vinyl", presets:[[3,1],[4,1],[5,1],[2,1],[6,1]] },
+  { id:"baliho", name:"Baliho", hint:"Ukuran besar, pinggir jalan", ctx:"billboard", unit:"m", orient:true, defOrient:"landscape", en:"large roadside billboard (baliho)", presets:[[6,4],[8,4],[10,5],[5,4]] },
+  { id:"xbanner", name:"X-Banner / Roll-up", hint:"Berdiri, vertikal", ctx:"standee", unit:"cm", orient:false, en:"vertical standing banner (X-banner / roll-up standee)", presets:[[60,160],[80,180],[85,200],[100,200]] },
+  { id:"poster", name:"Poster", hint:"Dinding & etalase", ctx:"poster", unit:"mm", orient:true, defOrient:"portrait", en:"promotional poster", presets:[[297,420,"A3"],[420,594,"A2"],[594,841,"A1"],[500,700,"50×70 cm"]] },
+  { id:"flyer", name:"Flyer / Brosur", hint:"Dibagikan, dipegang", ctx:"flyer", unit:"mm", orient:true, defOrient:"portrait", en:"printed promotional flyer", presets:[[148,210,"A5"],[210,297,"A4"],[105,148,"A6"],[99,210,"DL"]] },
+  { id:"menu", name:"Menu / Price List", hint:"Kuliner & jasa", ctx:"menu", unit:"mm", orient:true, defOrient:"portrait", en:"menu / price list", presets:[[210,297,"A4"],[297,420,"A3"],[148,210,"A5"]] },
+  { id:"feed", name:"Post Feed", hint:"Instagram, Facebook", ctx:"feed", unit:"px", orient:false, en:"social media feed post", presets:[[1080,1350,"4:5 Portrait"],[1080,1080,"1:1 Persegi"],[1080,1440,"3:4"]] },
+  { id:"story", name:"Story / Reels", hint:"Vertikal layar penuh", ctx:"story", unit:"px", orient:false, en:"vertical social media story / reels cover", presets:[[1080,1920,"9:16"]] },
+  { id:"thumb", name:"Thumbnail YouTube", hint:"Harus mencolok", ctx:"thumb", unit:"px", orient:false, en:"YouTube thumbnail", presets:[[1280,720,"16:9"]] },
+  { id:"web", name:"Banner Web", hint:"Marketplace & iklan", ctx:"web", unit:"px", orient:false, en:"web / e-commerce promotional banner", presets:[[1200,400,"Header toko 3:1"],[1200,628,"Iklan FB / Google"],[1920,600,"Hero website"],[1080,1080,"Iklan persegi"]] }
+];
+
+/* sw = CSS for the style swatch; g = glyph; f = preview font */
+const STYLES = [
+  { id:"photo", name:"Fotografi Komersial", d:"Foto iklan profesional",
+    sw:"background:radial-gradient(circle at 35% 30%,#fff7e6 0,#e8b98a 30%,#8a5a3c 70%,#3b2418 100%)",
+    en:"High-end commercial advertising photography: physically accurate lighting (key light, rim light, controlled softbox reflections), shot as if on a medium-format camera, true-to-life materials and textures. The product is the hero, styled with intentional props that tell the story. Retouched to agency standard — never generic stock photo.",
+    mj:"high-end commercial advertising photography, medium format, controlled studio lighting" },
+  { id:"minimal", name:"Minimalis Modern", d:"Lega, rapi, premium",
+    sw:"background:#f3f1ec;color:#1b1b1b", g:"<span style='font:600 14px var(--font-ui);letter-spacing:.2em'>— A —</span>",
+    en:"Modern minimalist: generous negative space, a strict grid, one hero element, refined sans-serif typography with deliberate weight contrast, restrained palette, precise alignment. Calm, premium and confident — the empty space is intentional, not unfinished.",
+    mj:"modern minimalist graphic design, generous negative space, strict grid, refined sans-serif" },
+  { id:"bold", name:"Tipografi Bold", d:"Huruf jadi visual utama",
+    sw:"background:#111;color:#f5e43a", g:"<span style='font:800 34px/0.8 var(--font-display);letter-spacing:-.06em'>Aa</span>",
+    en:"Type-driven bold layout (Swiss International style meets contemporary advertising): an oversized headline as the main visual, dramatic scale contrast, tight tracking on display type, asymmetric grid, flat color fields and graphic shapes that frame the text.",
+    mj:"bold typographic poster, oversized headline, swiss grid, dramatic scale contrast, flat color fields" },
+  { id:"flat", name:"Ilustrasi Flat", d:"Vektor bersih, konsisten",
+    sw:"background:radial-gradient(circle at 70% 60%,#f2a541 0 18px,transparent 19px),radial-gradient(circle at 30% 40%,#3c7a6e 0 14px,transparent 15px),#f6e7cf",
+    en:"Custom flat vector illustration: consistent line weights and corner radii, limited palette, purposeful geometric shapes, a subtle grain texture to avoid a sterile look, all characters and objects drawn in one coherent style.",
+    mj:"custom flat vector illustration, consistent line weight, limited palette, subtle grain" },
+  { id:"3d", name:"3D Render", d:"Objek 3D, cahaya lembut",
+    sw:"background:radial-gradient(circle at 42% 38%,#ffd9e6 0,#f07aa4 28%,#a3245a 56%,transparent 57%),linear-gradient(#e9e4f0,#cfc6dc)",
+    en:"3D rendered scene: soft global illumination, physically based materials (matte clay, glossy plastic, glass where fitting), tasteful depth of field, objects arranged as a deliberate composition on a clean set, product and brand elements modeled faithfully.",
+    mj:"3D render, soft global illumination, physically based materials, clean set" },
+  { id:"food", name:"Kuliner Menggugah", d:"Makanan terlihat lezat",
+    sw:"background:radial-gradient(circle at 50% 55%,#f6d8a8 0 12px,#d9822b 13px 20px,#7a2e12 21px 23px,transparent 24px),linear-gradient(135deg,#3a1d0e,#7a3a14)",
+    en:"Appetizing food advertising: hero food shot with real steam or condensation, glistening textures, fresh ingredients arranged with intent, warm inviting light, appetite-triggering colors, shallow depth of field. The food must look real, fresh and edible — never plastic.",
+    mj:"appetizing food advertising photography, glistening textures, fresh ingredients, warm light, shallow depth of field" },
+  { id:"luxury", name:"Mewah & Elegan", d:"Eksklusif, aksen emas", f:"serif",
+    sw:"background:linear-gradient(160deg,#151312,#2a2420);color:#d9b96a", g:"<span style='font:italic 700 28px Georgia,serif'>Aa</span>",
+    en:"Luxury editorial: deep rich tones with metallic (gold or champagne) accents used sparingly, high-contrast serif display type paired with a light sans-serif, fine hairline rules, generous space, dramatic directional lighting, a sense of exclusivity.",
+    mj:"luxury editorial design, deep rich tones, sparing gold accents, high-contrast serif typography" },
+  { id:"playful", name:"Ceria & Playful", d:"Warna berani, energik",
+    sw:"background:#ffd23f;color:#ee4266", g:"<span style='font:800 26px var(--font-display);transform:rotate(-8deg);display:inline-block'>Yay!</span>",
+    en:"Playful and energetic: bouncy rounded display type, bold saturated colors, dynamic tilted elements, badges and stickers used with intent, cheerful characters or props, a sense of movement — fun but still organized on a grid.",
+    mj:"playful energetic design, rounded bold type, saturated colors, dynamic tilted elements" },
+  { id:"retro", name:"Retro / Vintage", d:"Nuansa lawas autentik", f:"serif",
+    sw:"background:radial-gradient(#c8553d 1.4px,transparent 1.6px) 0 0/6px 6px,#f1dcb5;color:#2b4c5e", g:"<span style='font:700 22px Georgia,serif;background:#f1dcb5;padding:0 6px'>1978</span>",
+    en:"Authentic retro print aesthetic: period-appropriate typography (70s–80s advertising or classic Indonesian shop signage), halftone dots, slight ink misregistration, paper texture, warm faded palette — genuinely crafted, not a cheap filter.",
+    mj:"authentic retro print advertisement, halftone, ink misregistration, paper texture, warm faded palette" },
+  { id:"nusantara", name:"Etnik Nusantara", d:"Batik, songket, ornamen",
+    sw:"background:repeating-conic-gradient(from 45deg,#7a3e1d 0 25%,#d9a05b 0 50%) 0 0/16px 16px",
+    en:"Indonesian cultural design: authentic batik, songket or regional ornament patterns used as framing and texture (not as wallpaper), heritage-inspired earthy palette, paired with modern clean typography to stay contemporary.",
+    mj:"indonesian batik and songket ornament framing, heritage palette, modern clean typography" },
+  { id:"islamic", name:"Islami / Religi", d:"Ramadan, Idul Fitri", f:"serif",
+    sw:"background:radial-gradient(ellipse 22px 30px at 50% 100%,#f4e7c5 0 99%,transparent 100%),linear-gradient(#0f4d3f,#0a3329)",
+    en:"Islamic-inspired design: geometric arabesque patterns, arch or mosque silhouettes, lanterns or crescent motifs used tastefully, serene lighting, elegant typography. Respectful and refined — suitable for Ramadan, Eid or religious events.",
+    mj:"islamic geometric arabesque pattern, arch silhouettes, lanterns, serene elegant design" },
+  { id:"neon", name:"Neon / Futuristik", d:"Gelap, cahaya neon",
+    sw:"background:#0b0b14;color:#4df3ff", g:"<span style='font:700 18px var(--font-ui);letter-spacing:.12em;text-shadow:0 0 8px #4df3ff'>NEON</span>",
+    en:"Futuristic night aesthetic: dark base, controlled neon glow on key elements only, sharp tech typography, subtle grid or light trails, high contrast — energetic but always legible.",
+    mj:"futuristic neon night aesthetic, dark base, controlled neon glow, sharp tech typography" },
+  { id:"corporate", name:"Korporat", d:"Rapi, terpercaya",
+    sw:"background:linear-gradient(90deg,#1f3a68 0 38%,#e9eef5 38%);color:#1f3a68", g:"<span style='font:700 12px var(--font-ui);margin-left:46%;letter-spacing:.06em'>CORP</span>",
+    en:"Clean corporate design: structured grid, trustworthy palette, professional photography or a consistent icon set, clear information hierarchy, consistent spacing — credible and polished.",
+    mj:"clean corporate design, structured grid, professional photography, clear hierarchy" }
+];
+
+const SCHEMES = [
+  { id:"harmonis", name:"Harmonis", en:"balanced natural harmony built around the main color with soft supporting tones" },
+  { id:"mono", name:"Monokromatik", en:"monochromatic: tints, tones and shades of the main color only, plus neutral near-black and off-white" },
+  { id:"analog", name:"Analog", en:"analogous: the main color plus its direct neighbors on the color wheel, smooth and cohesive" },
+  { id:"komplementer", name:"Komplementer", en:"complementary: the main color set against its opposite on the color wheel, the opposite used only as a sharp accent" },
+  { id:"split", name:"Split-komplementer", en:"split-complementary: the main color with the two colors adjacent to its complement, lively yet balanced" },
+  { id:"triadik", name:"Triadik", en:"triadic: three evenly spaced hues, one clearly dominant and the other two as supporting accents" },
+  { id:"kontras", name:"Kontras Tinggi", en:"high contrast: near-black and off-white base with the main color as a bold, punchy accent" },
+  { id:"pastel", name:"Pastel Lembut", en:"soft pastel: light, airy tints with one deeper tone reserved for text and key accents" },
+  { id:"earth", name:"Earth Tone", en:"earth tones: warm natural browns, terracotta, olive and sand around the main color" },
+  { id:"gelap", name:"Gelap & Mewah", en:"dark and rich: deep dark base with the main color as a rich, glowing focal tone" },
+  { id:"meriah", name:"Cerah & Meriah", en:"vibrant festive: saturated, joyful colors with clear dominance so it never becomes chaotic" }
+];
+
+const QUICK = [
+  ["Merah","#C8102E"],["Oranye","#F2711C"],["Kuning","#F5C400"],["Hijau","#2E8B57"],["Tosca","#0FA3A3"],
+  ["Biru navy","#1F3A68"],["Biru","#1E6FD9"],["Ungu","#6B3FA0"],["Pink","#E8508A"],["Cokelat","#7B4A2D"],["Emas","#C9A227"],["Hitam","#1A1A1A"]
+];
+const COLOR_WORDS = [
+  ["merah marun","#7A1F2B"],["marun","#7A1F2B"],["maroon","#7A1F2B"],["merah muda","#F06A9B"],["biru navy","#1F3A68"],["navy","#1F3A68"],["biru muda","#6FB7E8"],["biru tua","#16325C"],
+  ["hijau botol","#0F5132"],["hijau tua","#1E5631"],["hijau muda","#8BC34A"],["hijau army","#4B5320"],["sage","#9CAF88"],["tosca","#0FA3A3"],["toska","#0FA3A3"],["turquoise","#1FB5AC"],
+  ["kuning","#F5C400"],["emas","#C9A227"],["gold","#C9A227"],["oranye","#F2711C"],["orange","#F2711C"],["jingga","#F2711C"],["terracotta","#C4623D"],["terakota","#C4623D"],
+  ["cokelat","#7B4A2D"],["coklat","#7B4A2D"],["krem","#EADBC0"],["cream","#EADBC0"],["salem","#F08A73"],["peach","#F7B596"],
+  ["ungu","#6B3FA0"],["lavender","#B59CDB"],["lilac","#B59CDB"],["magenta","#D4145A"],["pink","#E8508A"],["fuchsia","#D4145A"],
+  ["merah","#C8102E"],["biru","#1E6FD9"],["hijau","#2E8B57"],["abu","#7D7D7D"],["silver","#B8B8B8"],["perak","#B8B8B8"],["hitam","#1A1A1A"],["putih","#F7F5F0"]
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const DEFAULT = () => ({
+  type:"spanduk", preset:0, orient:"landscape", custom:false, cw:"", ch:"", cu:"m",
+  style:"photo", color:"", scheme:"harmonis",
+  brand:"", biz:"", headline:"", sub:"", points:[""], price:"", cta:"", contact:"",
+  notes:"", refImg:false, logo:false, mockup:false, mode:"full"
+});
+let S = DEFAULT();
+try { const sv = JSON.parse(localStorage.getItem("ppg-state")||"null"); if (sv) S = Object.assign(DEFAULT(), sv); } catch(e){}
+const save = () => { try { localStorage.setItem("ppg-state", JSON.stringify(S)); } catch(e){} };
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clean = s => (s||"").trim();
+const typeOf = () => TYPES.find(t => t.id === S.type) || TYPES[0];
+const styleOf = () => STYLES.find(s => s.id === S.style) || STYLES[0];
+const schemeOf = () => SCHEMES.find(s => s.id === S.scheme) || SCHEMES[0];
+
+/* =========================================================
+   SIZE
+   ========================================================= */
+function ratio(w,h){
+  const r = w/h; let best=[1,1], err=Infinity;
+  for (let q=1;q<=24;q++){ const p=Math.max(1,Math.round(r*q)); const e=Math.abs(p/q-r)/r; if(e<err-1e-9){err=e;best=[p,q];} if(e<0.012)break; }
+  return { p:best[0], q:best[1], exact:err<0.002 };
+}
+const fmt = n => (Math.round(n*100)/100).toString().replace(".",",");
+const fmtEn = n => (Math.round(n*100)/100).toString();
+function orientPair(w,h){
+  const t = typeOf();
+  if (t.orient){ if (S.orient==="landscape" && w<h) return [h,w]; if (S.orient==="portrait" && w>h) return [h,w]; }
+  return [w,h];
+}
+function size(){
+  const t = typeOf();
+  if (S.custom){ const w=parseFloat(S.cw), h=parseFloat(S.ch); return (w>0&&h>0) ? { w, h, u:S.cu, label:null } : null; }
+  const p = t.presets[S.preset] || t.presets[0]; const [w,h] = orientPair(p[0],p[1]);
+  return { w, h, u:t.unit, label:p[2]||null };
+}
+const orientEn = (w,h) => w>h ? "landscape" : w<h ? "portrait" : "square";
+const orientId = (w,h) => w>h ? "Landscape" : w<h ? "Portrait" : "Persegi";
+const sizeText = z => `${fmt(z.w)} × ${fmt(z.h)} ${z.u}`;
+
+/* =========================================================
+   COLOR
+   ========================================================= */
+const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
+function hex2rgb(h){ h=h.replace("#",""); if(h.length===3)h=h.split("").map(c=>c+c).join(""); const n=parseInt(h,16); return [n>>16&255,n>>8&255,n&255]; }
+function hex2hsl(hex){ let [r,g,b]=hex2rgb(hex).map(v=>v/255); const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let h=0,s=0,l=(mx+mn)/2; if(mx!==mn){const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4; h*=60;} return [h,s,l]; }
+function H(h,s,l){ h=((h%360)+360)%360; s=clamp(s,0,1); l=clamp(l,0,1); const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1))); return "#"+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,"0")).join(""); }
+function lum(hex){ return hex2rgb(hex).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);}).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0); }
+function contrast(a,b){ const x=lum(a), y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); }
+const DARK="#15120E", LIGHT="#FBF8F2";
+const onColor = bg => contrast(bg,DARK) >= contrast(bg,LIGHT) ? DARK : LIGHT;
+function parseColor(str){
+  const s = (str||"").toLowerCase();
+  const m = s.match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/); if (m) return "#"+m[1];
+  for (const [w,hex] of COLOR_WORDS) if (s.includes(w)) return hex;
+  return null;
+}
+function palette(base, scheme){
+  const b = base || "#8A7F70"; const [h,s0,l0] = hex2hsl(b); const s = Math.max(s0,.35);
+  let bg, main=b, acc;
+  switch(scheme){
+    case "mono": bg=H(h,s*.45,.94); acc=H(h,s,.22); break;
+    case "analog": bg=H(h+30,s*.35,.93); acc=H(h-35,Math.max(s,.55),.45); break;
+    case "komplementer": bg=H(h,s*.25,.95); acc=H(h+180,Math.max(s,.65),.5); break;
+    case "split": bg=H(h+210,s*.3,.94); acc=H(h+150,Math.max(s,.6),.46); break;
+    case "triadik": bg=H(h+240,s*.3,.94); acc=H(h+120,Math.max(s,.6),.44); break;
+    case "kontras": bg="#121110"; acc="#F5F2EC"; break;
+    case "pastel": bg=H(h,.55,.93); main=H(h,.5,.76); acc=H(h+30,.45,.32); break;
+    case "earth": bg=H(38,.3,.88); main=H(h,Math.min(s0,.42),clamp(l0,.3,.45)); acc=H(18,.55,.4); break;
+    case "gelap": bg=H(h,.25,.08); acc=H(h+25,Math.max(s,.6),.62); break;
+    case "meriah": bg=H(h,Math.max(s,.75),.55); main=H(h+45,.9,.55); acc=H(h+190,.9,.5); break;
+    default: bg=H(h,s*.35,.93); acc=H(h+25,Math.max(s,.5),.45);
+  }
+  return { bg, main, acc, ink:onColor(bg), mainInk:onColor(main), accInk:onColor(acc) };
+}
+
+/* =========================================================
+   RENDER: STEP 1–4
+   ========================================================= */
+function ratioBox(w,h,max=30){ const r=w/h; const bw=r>=1?max:Math.max(9,max*r), bh=r>=1?Math.max(9,max/r):max; return `<i style="width:${bw.toFixed(1)}px;height:${bh.toFixed(1)}px"></i>`; }
+function renderTypes(){
+  $("#types").innerHTML = TYPES.map(t => {
+    const p=t.presets[0]; let [w,h]=[p[0],p[1]]; if(t.defOrient==="portrait"&&w>h)[w,h]=[h,w];
+    return `<button type="button" class="opt" data-type="${t.id}" aria-pressed="${t.id===S.type}"><span class="ratio-ico">${ratioBox(w,h,36)}</span><b>${t.name}</b><small>${t.hint}</small></button>`;
+  }).join("");
+}
+function renderFormat(){
+  const t = typeOf(); const px = t.unit==="px";
+  $("#formatHint").textContent = px ? "Ukuran layar dalam piksel. Rasio menyesuaikan platform." : "Ukuran cetak. Rasio dihitung otomatis dan dikirim ke prompt.";
+  let h = "";
+  if (t.orient){
+    h += `<div class="block"><span class="lbl">Orientasi</span><div class="seg" id="orientSeg" role="group" aria-label="Orientasi"><span class="thumb"></span>
+      <button type="button" data-orient="portrait" aria-pressed="${S.orient==="portrait"}"><span class="seg-ico"><i style="width:9px;height:13px"></i>Portrait</span></button>
+      <button type="button" data-orient="landscape" aria-pressed="${S.orient==="landscape"}"><span class="seg-ico"><i style="width:13px;height:9px"></i>Landscape</span></button></div></div>`;
+  }
+  h += `<div class="block"><span class="lbl">${px?"Rasio / ukuran":"Ukuran"}</span><div class="chips">`;
+  t.presets.forEach((p,i) => {
+    const [w,hh] = orientPair(p[0],p[1]);
+    const dims = `${fmt(w)}×${fmt(hh)}${px?"":" "+t.unit}`;
+    h += `<button type="button" class="chip" data-preset="${i}" aria-pressed="${!S.custom&&S.preset===i}">${esc(p[2]||dims)}${p[2]?`<small>${dims}</small>`:""}</button>`;
+  });
+  h += `<button type="button" class="chip" data-preset="custom" aria-pressed="${S.custom}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Custom</button></div>
+    <div class="collapse ${S.custom?"open":""}" id="customBox"><div><div class="row r3">
+      <div><label class="lbl" for="cw">Lebar</label><input type="number" min="0" step="any" id="cw" data-k="cw" value="${esc(S.cw)}" placeholder="0" inputmode="decimal"></div>
+      <div><label class="lbl" for="ch">Tinggi</label><input type="number" min="0" step="any" id="ch" data-k="ch" value="${esc(S.ch)}" placeholder="0" inputmode="decimal"></div>
+      <div><label class="lbl" for="cu">Satuan</label><select id="cu" data-k="cu">${["m","cm","mm","px"].map(u=>`<option ${u===S.cu?"selected":""}>${u}</option>`).join("")}</select></div>
+    </div></div></div></div><div class="spec" id="spec"></div>`;
+  $("#format").innerHTML = h;
+  placeThumbs();
+}
+function renderStyles(){
+  $("#styles").innerHTML = STYLES.map(s => `<button type="button" class="opt" data-style="${s.id}" aria-pressed="${s.id===S.style}"><span class="style-sw" style="${s.sw}" aria-hidden="true">${s.g||""}</span><b>${s.name}</b><small>${s.d}</small></button>`).join("");
+}
+function renderQuick(){
+  const cur = (parseColor(S.color)||"").toLowerCase();
+  $("#quick").innerHTML = QUICK.map(([n,hex]) => `<button type="button" class="qs" data-quick="${n}|${hex}" style="background:${hex}" aria-label="${n}" title="${n}" aria-pressed="${cur===hex.toLowerCase()}"></button>`).join("");
+}
+function renderSchemes(){
+  const base = parseColor(S.color);
+  $("#schemes").innerHTML = SCHEMES.map(s => { const p = palette(base, s.id);
+    return `<button type="button" class="sch" data-scheme="${s.id}" aria-pressed="${s.id===S.scheme}"><span class="pal" aria-hidden="true"><i style="background:${p.bg}"></i><i style="background:${p.main}"></i><i style="background:${p.acc}"></i></span>${s.name}</button>`; }).join("");
+}
+function paintSchemes(){
+  const base = parseColor(S.color);
+  $$("#schemes .sch").forEach(b => { const p = palette(base, b.dataset.scheme); const i = b.querySelectorAll(".pal i"); i[0].style.background=p.bg; i[1].style.background=p.main; i[2].style.background=p.acc; });
+  $("#swatch").style.background = base || "repeating-linear-gradient(45deg,var(--surface-3) 0 6px,var(--surface-2) 6px 12px)";
+  $$("#quick .qs").forEach(q => q.setAttribute("aria-pressed", (base||"").toLowerCase() === q.dataset.quick.split("|")[1].toLowerCase()));
+}
+function renderPoints(){
+  $("#points").innerHTML = S.points.map((p,i) => `<div class="point"><span>${i+1}</span><input type="text" data-point="${i}" value="${esc(p)}" placeholder="${i===0?"Cth: Buka setiap hari 08.00–22.00":"Poin berikutnya"}" aria-label="Poin ${i+1}" autocomplete="off">${S.points.length>1?`<button type="button" class="x-btn" data-del="${i}" aria-label="Hapus poin ${i+1}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`:""}</div>`).join("");
+  $("#addPoint").disabled = S.points.length >= 6;
+}
+function placeThumbs(){
+  $$(".seg").forEach(seg => { const on = seg.querySelector('button[aria-pressed="true"]'), th = seg.querySelector(".thumb"); if (on && th){ th.style.left = on.offsetLeft+"px"; th.style.width = on.offsetWidth+"px"; } });
+}
+function syncInputs(){
+  $$("[data-k]").forEach(el => { if (["cw","ch","cu"].includes(el.id)) return; const v=S[el.dataset.k]; if (el.type==="checkbox") el.checked=!!v; else el.value = v ?? ""; });
+  const base = parseColor(S.color); if (base) $("#colorPick").value = base.length===4 ? "#"+base.slice(1).split("").map(c=>c+c).join("") : base;
+}
+
+/* =========================================================
+   RAIL
+   ========================================================= */
+const RAIL = [["s1","Jenis"],["s2","Ukuran"],["s3","Gaya"],["s4","Warna"],["s5","Teks"],["s6","Detail"]];
+function renderRail(){
+  $("#rail").innerHTML = RAIL.map(([id,t],i) => `<li><a href="#${id}" data-rail="${id}"><span class="rail-top"><span class="rail-dot"><b>${i+1}</b><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l2.8 2.7L12.5 5"/></svg></span>${t}</span><span class="rail-sum" id="sum-${id}"></span></a></li>`).join("");
+}
+function updateRail(){
+  const t = typeOf(), z = size(), st = styleOf(), sc = schemeOf();
+  const filled = [S.headline,S.sub,...S.points,S.price,S.cta,S.contact].filter(v=>clean(v)).length;
+  const sums = {
+    s1:[t.name,true],
+    s2:[z ? `${sizeText(z)}` : "Isi ukuran", !!z],
+    s3:[st.name,true],
+    s4:[`${clean(S.color)?clean(S.color).split(/[,(]/)[0]:"Warna bebas"} · ${sc.name}`, true],
+    s5:[filled ? `${filled} teks${clean(S.brand)?" · "+clean(S.brand):""}` : (clean(S.brand)||"Belum diisi"), !!(clean(S.headline)||clean(S.brand))],
+    s6:[clean(S.notes) ? "Ada instruksi" : "Opsional", !!clean(S.notes)||S.refImg||S.logo]
+  };
+  let done = 0;
+  Object.entries(sums).forEach(([id,[txt,ok]]) => { const a=document.querySelector(`[data-rail="${id}"]`); if(!a)return; a.classList.toggle("done",ok); $("#sum-"+id).textContent=txt; if(ok)done++; });
+  $("#railBar").style.transform = `scaleX(${done/6})`;
+}
+function spy(){
+  const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting){ $$(".rail a").forEach(a => a.classList.toggle("on", a.dataset.rail===e.target.id)); const a=document.querySelector(`[data-rail="${e.target.id}"]`), list=$("#rail");
+      if (a && list.scrollWidth > list.clientWidth){ const li=a.parentElement; list.scrollTo({ left: li.offsetLeft - (list.clientWidth - li.offsetWidth)/2, behavior:"smooth" }); } } }); }, { rootMargin:"-45% 0px -50% 0px" });
+  $$("main .sec").forEach(s => io.observe(s));
+}
+
+/* =========================================================
+   CANVAS PREVIEW
+   ========================================================= */
+function renderCanvas(){
+  const z = size() || { w:1, h:1, u:"" };
+  const stage = $("#stage"), cv = $("#cv");
+  const r = z.w/z.h;
+  const mw = stage.clientWidth - 40, mh = stage.clientHeight - 40;
+  let w = Math.min(mw, mh*r), h = w/r; if (h > mh){ h = mh; w = h*r; }
+  cv.style.width = Math.max(24,w)+"px"; cv.style.height = Math.max(24,h)+"px";
+  cv.dataset.lay = r >= 2.2 ? "wide" : r >= 1.25 ? "row" : "col";
+  const t = typeOf(), safe = CTX[t.ctx].safe;
+  $("#cvSafe").style.inset = safe;
+  const sv = safe.split(" "); const [st_,rt,bt,lt] = [sv[0], sv[1]||sv[0], sv[2]||sv[0], sv[3]||sv[1]||sv[0]];
+  $("#cvIn").style.inset = [st_,rt,bt,lt].map(v=>`calc(${v} + 3cqmin)`).join(" ");
+  const p = palette(parseColor(S.color), S.scheme);
+  cv.style.background = p.bg; cv.style.color = p.ink;
+  const vis = $("#cvVis"); vis.style.background = p.main;
+  $("#cvVisLbl").textContent = clean(S.notes) ? "Visual sesuai instruksi" : `Visual · ${styleOf().name}`;
+  const serif = styleOf().f === "serif" ? " serif" : "";
+  const ghost = (wd) => `<i class="ghost" style="width:${wd}%"></i>`;
+  const cvLay = cv.dataset.lay;
+  const pts = S.points.map(clean).filter(Boolean);
+  const maxPts = cvLay === "wide" ? 2 : 3;
+  let top = "";
+  if (clean(S.brand)) top += `<div class="cv-brand cv-el">${esc(S.brand)}</div>`;
+  top += clean(S.headline) ? `<div class="cv-h cv-el${serif}">${esc(S.headline)}</div>` : `<div class="cv-h">${ghost(85)}${ghost(55)}</div>`;
+  if (clean(S.sub)) top += `<div class="cv-sub cv-el">${esc(S.sub)}</div>`;
+  else if (!clean(S.headline)) top += `<div class="cv-sub">${ghost(70)}</div>`;
+  let bot = "";
+  if (pts.length) bot += `<ul class="cv-pts cv-el">${pts.slice(0,maxPts).map(x=>`<li>${esc(x)}</li>`).join("")}${pts.length>maxPts?`<li>+${pts.length-maxPts} poin lagi</li>`:""}</ul>`;
+  const row = [];
+  if (clean(S.price)) row.push(`<span class="cv-price cv-el" style="background:${p.acc};color:${p.accInk}">${esc(S.price)}</span>`);
+  if (clean(S.cta)) row.push(`<span class="cv-cta cv-el" style="background:${p.ink};color:${p.bg}">${esc(S.cta)}</span>`);
+  if (row.length) bot += `<div class="cv-row">${row.join("")}</div>`;
+  if (clean(S.contact)) bot += `<div class="cv-contact cv-el">${esc(S.contact)}</div>`;
+  const tk = top+"|"+bot+"|"+serif;
+  if (cv._tk !== tk){ $("#cvTop").innerHTML = top; $("#cvBot").innerHTML = bot; cv._tk = tk; }
+  $("#pvMeta").textContent = size() ? `${sizeText(z)} · ${ratioLabel(z)}` : "Ukuran belum lengkap";
+  // mobile bar
+  const mt = $("#mbThumb"); const mr = 34; mt.style.width = (r>=1?mr:Math.max(8,mr*r))+"px"; mt.style.height=(r>=1?Math.max(8,mr/r):mr)+"px"; mt.style.background = p.main;
+  $("#mbTitle").textContent = `${t.name} · ${styleOf().name}`;
+  $("#mbSub").textContent = size() ? `${sizeText(z)} · rasio ${ratioLabel(z)}` : "Isi ukuran custom";
+}
+const ratioLabel = z => { const r = ratio(z.w,z.h); return `${r.exact?"":"≈"}${r.p}:${r.q}`; };
+
+/* =========================================================
+   PROMPT BUILDER
+   ========================================================= */
+const q = s => `"${s.trim()}"`;
+function textItems(){
+  const pts = S.points.map(clean).filter(Boolean), it = [];
+  if (clean(S.headline)) it.push(["HEADLINE — the dominant, largest text",[S.headline]]);
+  if (clean(S.sub)) it.push(["SUBHEADLINE — clearly secondary",[S.sub]]);
+  if (pts.length) it.push(["KEY POINTS — tertiary level, grouped, one consistent bullet or icon treatment",pts]);
+  if (clean(S.price)) it.push(["PRICE / PROMO — high-visibility highlight (badge, tag or bold block) integrated into the layout",[S.price]]);
+  if (clean(S.cta)) it.push(["CALL TO ACTION — clear, button- or strip-like element",[S.cta]]);
+  if (clean(S.contact)) it.push(["CONTACT / INFO — smallest level, still fully legible",[S.contact]]);
+  return it;
+}
+const wordCount = () => [S.headline,S.sub,...S.points,S.price,S.cta,S.contact].map(clean).filter(Boolean).join(" ").split(/\s+/).filter(Boolean).length;
+
+function buildFull(){
+  const t=typeOf(), ctx=CTX[t.ctx], st=styleOf(), sc=schemeOf(), z=size(), brand=clean(S.brand), biz=clean(S.biz), L=[];
+  L.push(`You are a senior art director and graphic designer with 15+ years at a top advertising agency. Design a finished, ready-to-${t.unit==="px"?"publish":"print"} ${t.en}${brand?` for "${brand}"`:""}${biz?`, a ${biz}`:""}. Treat this as a paid client brief that will be judged by a demanding creative director: go all out on concept, composition, typography and craft. Do not hand in a template.`);
+  L.push(``,`## 1. FORMAT & CANVAS`);
+  if (z){ const r=ratio(z.w,z.h); L.push(`- Canvas: ${fmtEn(z.w)} × ${fmtEn(z.h)} ${z.u}${z.label?` (${z.label})`:""}, ${orientEn(z.w,z.h)}, aspect ratio ${r.exact?"":"≈"}${r.p}:${r.q}. Compose specifically for this proportion — do not crop a generic layout into it.`); }
+  else L.push(`- Canvas: ${t.en}, standard proportion.`);
+  L.push(`- Viewing context: ${ctx.en}`);
+  L.push(S.mockup ? `- Output: show the finished design as a realistic in-situ mockup (installed in its real location, correct perspective and lighting), with the design itself fully readable.` : `- Output: the flat artwork only, filling the entire canvas edge to edge. No mockup, no frame, no wall, no hands, no perspective view.`);
+  L.push(``,`## 2. BRAND & SUBJECT`);
+  if (brand) L.push(`- Brand: "${brand}"${biz?` — ${biz}`:""}.`); else if (biz) L.push(`- Business: ${biz}.`);
+  L.push(S.logo ? `- Logo: use the attached logo exactly as provided. Do not redraw, recolor, distort or reinterpret it. Give it clear space.` : `- Logo: none provided.${brand?` Set the brand name "${brand}" as a clean, well-crafted wordmark in the chosen typography.`:""} Do not invent a logo symbol or emblem.`);
+  if (S.refImg) L.push(`- Reference image attached: keep the product exactly as shown (shape, label, colors, proportions, details). Do not redesign or "improve" the product — design the layout, lighting and scene around it.`);
+  if (clean(S.notes)) L.push(`- Specific direction from the client (follow it; it may be in Indonesian): ${clean(S.notes)}`);
+  L.push(`- Concept: before drawing, decide one clear creative idea that connects ${brand?"the brand":"the business"} with the main message, and build every visual decision around that idea.`);
+  L.push(``,`## 3. VISUAL STYLE`,`- ${st.en}`);
+  L.push(``,`## 4. COLOR`);
+  L.push(clean(S.color) ? `- Main color: ${clean(S.color)}. It must clearly dominate the brand impression.` : `- Main color: not fixed — choose the color that best fits the business and the visual style.`);
+  L.push(`- Scheme: ${sc.en}.`);
+  L.push(`- Apply a 60-30-10 proportion (dominant / secondary / accent). Reserve the accent for the most important element (offer or CTA).`);
+  L.push(`- Text colors are your decision: derive them from the palette for maximum legibility. Every text element needs strong contrast with what is directly behind it (aim for WCAG 4.5:1 or higher). Use clean areas, solid shapes or subtle overlays behind text — never place text over busy detail.`);
+  if (t.unit!=="px") L.push(`- Keep colors print-safe (CMYK-reproducible); avoid neon RGB tones that turn dull in print unless the style demands it.`);
+  L.push(``,`## 5. TEXT TO RENDER`);
+  const items = textItems();
+  if (items.length){
+    L.push(`Render the following text EXACTLY as written — character for character, same spelling, capitalization, numbers and punctuation. It is in Indonesian: do not translate, paraphrase, shorten or add words.`);
+    items.forEach(([role,vals]) => { L.push(`- ${role}:`); vals.forEach(v => L.push(`    ${q(v)}`)); });
+    L.push(`Do not add any other text: no lorem ipsum, no invented slogans, no fake URLs, phone numbers, prices, QR codes, dates or watermarks.${brand?` The brand name "${brand}" may appear as the wordmark/logo.`:""}`);
+  } else L.push(brand ? `The only text allowed is the brand name "${brand}". No other words, numbers or placeholder text.` : `No text at all. Purely visual — no letters, numbers or placeholder text anywhere.`);
+  L.push(``,`## 6. LAYOUT & TYPOGRAPHY`);
+  L.push(`- One unmistakable focal point and an obvious reading order: focal visual → headline → offer → CTA → details.`);
+  L.push(`- Clear 3-level typographic hierarchy with deliberate size and weight contrast. Max 2 typeface families. Proper kerning and line spacing; no stretched, squashed or faux-bold type.`);
+  L.push(`- Build on a consistent grid with intentional alignment. Generous margins; elements must breathe — nothing crammed against the edges or each other.`);
+  L.push(`- Group related information (proximity) and keep spacing consistent. Use asymmetry, scale and overlap purposefully instead of centering everything by default.`);
+  L.push(`- Every element must earn its place. If it does not support the message, leave it out.`);
+  L.push(``,`## 7. AVOID — hard rules`);
+  L.push(`- Misspelled, melted, mirrored, duplicated or gibberish letters; any text not listed above.`);
+  L.push(`- The generic "AI look": purple-blue gradient glow, random bokeh orbs, lens flares, floating sparkles or particles, over-glossy plastic surfaces, waxy skin, HDR oversaturation, everything glowing.`);
+  L.push(`- Deformed hands, faces or products; warped perspective; objects melting into each other; impossible physics.`);
+  L.push(`- Cheap stock-template look, clip-art, cluttered collages, random decorative shapes with no purpose, drop shadows or outlines on every text, rainbow or chrome text effects.`);
+  L.push(`- Low-effort composition: tiny subject floating in the middle, unbalanced empty corners, elements touching the canvas edge by accident.`);
+  L.push(``,`## 8. FINAL SELF-CHECK (do this before delivering)`);
+  L.push(`- Every text is spelled exactly as given and nothing extra was added.`);
+  L.push(`- The headline reads instantly in the stated viewing context.`);
+  L.push(`- There is one clear focal point and the palette follows the chosen scheme.`);
+  L.push(`- Nothing important is cut off or inside the unsafe margins.`);
+  L.push(`- It looks like a real agency deliverable a client would pay for. If not, redesign before delivering.`);
+  return L.join("\n");
+}
+function buildMJ(){
+  const t=typeOf(), st=styleOf(), sc=schemeOf(), z=size(), brand=clean(S.brand), biz=clean(S.biz), parts=[];
+  parts.push(`${S.mockup?"realistic in-situ mockup of a ":"flat "}${t.en} design${brand?` for "${brand}"`:""}${biz?`, ${biz}`:""}`);
+  if (clean(S.notes)) parts.push(clean(S.notes).replace(/[\s.,;]+$/,"").replace(/\s*\n+\s*/g,", "));
+  parts.push(st.mj);
+  parts.push(`${clean(S.color)?clean(S.color)+" as main color, ":""}${sc.en.split(":")[0]} color scheme`);
+  const tx=[]; if(clean(S.headline))tx.push(`large headline text ${q(S.headline)}`); if(clean(S.sub))tx.push(`subheadline ${q(S.sub)}`); if(clean(S.price))tx.push(`promo badge ${q(S.price)}`); if(clean(S.cta))tx.push(`call to action ${q(S.cta)}`);
+  if (tx.length) parts.push(tx.join(", "));
+  parts.push("agency-grade art direction, one clear focal point, strong typographic hierarchy, generous margins, crisp legible typography, purposeful composition");
+  const r = z ? ratio(z.w,z.h) : {p:1,q:1};
+  return `${parts.join(", ")} --ar ${r.p}:${r.q} --style raw --no gibberish text, misspelled letters, watermark, lens flare, bokeh orbs, sparkles, clutter, clip art${S.mockup?"":", mockup, frame"}`;
+}
+
+/* =========================================================
+   OUTPUT
+   ========================================================= */
+let prevLines = null;
+function renderOutput(){
+  const txt = S.mode==="full" ? buildFull() : buildMJ();
+  const lines = txt.split("\n"); const prev = prevLines ? new Set(prevLines) : null;
+  $("#output").innerHTML = lines.map(l => {
+    const cls = ["ln"]; if (l.startsWith("## ")) cls.push("h"); if (prev && l && !prev.has(l)) cls.push("new");
+    const html = esc(l).replace(/&quot;([^&]*?)&quot;/g, '<q>&quot;$1&quot;</q>');
+    return `<span class="${cls.join(" ")}">${html||" "}</span>`;
+  }).join("");
+  prevLines = lines;
+  $("#output").dataset.raw = txt;
+  $("#count").textContent = `${txt.length.toLocaleString("id-ID")} karakter`;
+  $("#modeNote").textContent = S.mode==="full" ? "Untuk ChatGPT, Gemini, Ideogram, Flux" : "Satu paragraf + parameter --ar";
+  $$("#mode button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode===S.mode));
+}
+function renderSpec(){
+  const z=size(), el=$("#spec"); if(!el) return;
+  el.innerHTML = z ? `<span>Ukuran <b>${sizeText(z)}</b></span><span>Rasio <b>${ratioLabel(z)}</b></span><span>Orientasi <b>${orientId(z.w,z.h)}</b></span>` : `<span>Isi lebar dan tinggi untuk menghitung rasio.</span>`;
+}
+function renderWarn(){
+  const t=typeOf(), lim=CTX[t.ctx].warnWords, wc=wordCount();
+  const ico = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>`;
+  let h = "";
+  if (wc > lim) h = `<div class="warn" style="margin-top:14px">${ico}<span>Teks ${wc} kata, terlalu banyak untuk ${t.name.toLowerCase()} (saran maks ±${lim} kata). Desain akan sulit terbaca dari jarak pandangnya.</span></div>`;
+  else if (S.mode==="mj" && (S.points.some(p=>clean(p)) || clean(S.contact))) h = `<p class="hint" style="margin-top:14px">Mode Midjourney hanya memakai judul, sub-judul, promo dan CTA. Poin dan kontak sulit dirender Midjourney.</p>`;
+  if ($("#textWarn").innerHTML !== h) $("#textWarn").innerHTML = h;
+}
+function update(){ renderOutput(); renderSpec(); renderCanvas(); updateRail(); renderWarn(); save(); }
+function full(){ renderRail(); renderTypes(); renderFormat(); renderStyles(); renderQuick(); renderSchemes(); renderPoints(); syncInputs(); paintSchemes(); prevLines=null; update(); requestAnimationFrame(placeThumbs); }
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+function pressOnly(container, attr, val){ $$(`${container} [${attr}]`).forEach(b => b.setAttribute("aria-pressed", b.getAttribute(attr)===val)); }
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const d = b.dataset;
+  if (d.type){
+    if (S.type !== d.type){ S.type=d.type; S.preset=0; S.custom=false; const t=typeOf(); S.orient=t.defOrient||"landscape"; S.cu=t.unit; }
+    pressOnly("#types","data-type",d.type); renderFormat(); update();
+  } else if (d.preset !== undefined){
+    if (d.preset==="custom"){ if(!S.custom){ const z=size(); if(z){ S.cw=String(z.w); S.ch=String(z.h); S.cu=z.u; } } S.custom=true; }
+    else { S.custom=false; S.preset=+d.preset; }
+    renderFormat(); update(); if (S.custom) setTimeout(()=>$("#cw")?.focus({preventScroll:true}),50);
+  } else if (d.orient){ S.orient=d.orient; renderFormat(); update(); }
+  else if (d.style){ S.style=d.style; pressOnly("#styles","data-style",d.style); update(); }
+  else if (d.scheme){ S.scheme=d.scheme; pressOnly("#schemes","data-scheme",d.scheme); update(); }
+  else if (d.quick){ const [n,hex]=d.quick.split("|"); S.color=`${n} ${hex}`; $("#color").value=S.color; $("#colorPick").value=hex.toLowerCase(); paintSchemes(); update(); }
+  else if (d.del !== undefined){ S.points.splice(+d.del,1); renderPoints(); update(); }
+  else if (d.mode){ S.mode=d.mode; update(); placeThumbs(); }
+});
+document.addEventListener("input", e => {
+  const el = e.target;
+  if (el.id==="colorPick"){ S.color = el.value.toUpperCase(); $("#color").value=S.color; paintSchemes(); update(); return; }
+  if (el.dataset.k){ S[el.dataset.k] = el.type==="checkbox" ? el.checked : el.value; if (el.dataset.k==="color") paintSchemes(); update(); }
+  else if (el.dataset.point !== undefined){ S.points[+el.dataset.point]=el.value; update(); }
+});
+document.addEventListener("change", e => { const el=e.target; if (el.type==="checkbox" && el.dataset.k){ S[el.dataset.k]=el.checked; update(); } });
+$("#addPoint").addEventListener("click", () => { if (S.points.length>=6) return; S.points.push(""); renderPoints(); update(); document.querySelector(`[data-point="${S.points.length-1}"]`)?.focus(); });
+
+/* copy */
+let toastT;
+function toast(msg){ $("#toastTxt").textContent=msg; $("#toast").classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>$("#toast").classList.remove("on"),1800); }
+$("#copy").addEventListener("click", async () => {
+  const txt = $("#output").dataset.raw, btn = $("#copy");
+  try { await navigator.clipboard.writeText(txt); }
+  catch(err){ const ta=document.createElement("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  btn.classList.add("done"); toast("Prompt tersalin. Tempel ke AI gambar pilihanmu.");
+  setTimeout(()=>btn.classList.remove("done"),1800);
+});
+
+/* sheet (mobile) */
+const openSheet = () => { $("#side").classList.add("open"); $("#scrim").classList.add("on"); document.body.style.overflow="hidden"; requestAnimationFrame(()=>{ renderCanvas(); placeThumbs(); }); };
+const closeSheet = () => { $("#side").classList.remove("open"); $("#scrim").classList.remove("on"); document.body.style.overflow=""; };
+$("#openSheet").addEventListener("click", openSheet);
+$("#closeSheet").addEventListener("click", closeSheet);
+$("#scrim").addEventListener("click", closeSheet);
+document.addEventListener("keydown", e => { if (e.key==="Escape") closeSheet(); });
+
+/* header actions */
+$("#btnReset").addEventListener("click", () => { if (confirm("Kosongkan semua isian?")){ S=DEFAULT(); full(); toast("Isian dikosongkan"); } });
+$("#btnSample").addEventListener("click", () => {
+  S = Object.assign(DEFAULT(), { type:"spanduk", preset:0, style:"food", color:"Cokelat kopi #6B3E26", scheme:"earth",
+    brand:"Kedai Kopi Nusantara", biz:"kedai kopi susu kekinian", headline:"GRAND OPENING", sub:"Ngopi enak mulai 10 ribuan",
+    points:["Kopi susu gula aren","Free Wi-Fi & colokan","Buka 08.00–22.00"], price:"Diskon 50%", cta:"Mampir sekarang!",
+    contact:"Jl. Merdeka No. 12 · @kedainusantara", notes:"Tampilkan 2 gelas es kopi susu berembun di meja kayu, suasana kedai hangat sore hari.", mode:S.mode });
+  full(); toast("Contoh dimuat");
+});
+
+/* theme */
+const MOON = '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
+const SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+const setThemeIcon = () => { $("#icoTheme").innerHTML = isDark() ? SUN : MOON; };
+try { const th = localStorage.getItem("ppg-theme"); if (th) document.documentElement.dataset.theme = th; } catch(e){}
+$("#btnTheme").addEventListener("click", () => { const nx = isDark() ? "light" : "dark"; document.documentElement.dataset.theme = nx; try{localStorage.setItem("ppg-theme",nx);}catch(e){} setThemeIcon(); });
+setThemeIcon();
+
+window.addEventListener("resize", () => { renderCanvas(); placeThumbs(); });
+full(); spy();
+if (document.fonts) document.fonts.ready.then(placeThumbs);
+</script>
+</body>
+</html>
